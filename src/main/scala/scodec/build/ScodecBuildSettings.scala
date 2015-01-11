@@ -28,13 +28,17 @@ object ScodecBuildSettings extends AutoPlugin {
   override def trigger = allRequirements
 
   object autoImport {
+
     lazy val scodecModule = settingKey[String]("Name of the scodec module (should match github repository name)")
+
     lazy val githubHttpUrl = settingKey[String]("HTTP URL to the github repository")
 
     case class Contributor(name: String, githubUsername: String)
     lazy val contributors = settingKey[Seq[Contributor]]("Contributors to the project")
 
     lazy val rootPackage = settingKey[String]("Root package of the project")
+
+    lazy val scodecPrimaryModule = scodecPrimaryModuleSettings
   }
   import autoImport._
 
@@ -46,7 +50,6 @@ object ScodecBuildSettings extends AutoPlugin {
   private def ivySettings = Seq(
     organization := "org.scodec",
     organizationHomepage := Some(new URL("http://scodec.org")),
-    name := scodecModule.value,
     licenses += ("Three-clause BSD-style", url(githubHttpUrl.value + "blob/master/LICENSE")),
     unmanagedResources in Compile <++= baseDirectory map { base => (base / "NOTICE") +: (base / "LICENSE") +: ((base / "licenses") * "LICENSE_*").get },
     git.remoteRepo := "git@github.com:scodec/${scodecModule.value}.git"
@@ -65,8 +68,10 @@ object ScodecBuildSettings extends AutoPlugin {
       "-Yclosure-elim",
       "-Yinline"),
     scalacOptions in (Compile, doc) ++= {
-      // TODO tagOrBranch is wrong when building snapshots from series branches; if version ends with snapshot, use current branch name
-      val tagOrBranch = if (version.value endsWith "SNAPSHOT") "master" else ("v" + version.value)
+      val tagOrBranch = {
+        if (version.value endsWith "SNAPSHOT") gitCurrentBranch.value 
+        else ("v" + version.value)
+      }
       Seq(
         "-diagrams",
         "-groups",
@@ -76,13 +81,8 @@ object ScodecBuildSettings extends AutoPlugin {
         "-doc-source-url", githubHttpUrl.value + "tree/" + tagOrBranch + "€{FILE_PATH}.scala"
       )
     },
-    autoAPIMappings := true,
-    apiURL := Some(url(s"http://scodec.org/api/scodec-spire/${version.value}/")),
     testOptions in Test += Tests.Argument("-oD"),
-    crossBuild := true,
-    sourceGenerators in Compile <+= buildInfo,
-    buildInfoPackage := rootPackage.value,
-    buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, gitHeadCommit)
+    crossBuild := true
   )
 
   private def osgiSettings = SbtOsgi.osgiSettings ++ Seq(
@@ -208,5 +208,14 @@ object ScodecBuildSettings extends AutoPlugin {
     else Some(s"$x.$y.${z.toInt - 1}")
   }
 
-  override def projectSettings = keySettings ++ ivySettings ++ scalaSettings ++ osgiSettings ++ publishingSettings ++ releaseSettings ++ siteSettings ++ mimaSettings
+  override def projectSettings = keySettings ++ ivySettings ++ scalaSettings ++ publishingSettings ++ releaseSettings ++ mimaSettings
+
+  def scodecPrimaryModuleSettings: Seq[Setting[_]] = siteSettings ++ osgiSettings ++ Seq( 
+    name := scodecModule.value,
+    autoAPIMappings := true,
+    apiURL := Some(url(s"http://scodec.org/api/${scodecModule.value}/${version.value}/")),
+    sourceGenerators in Compile <+= buildInfo,
+    buildInfoPackage := rootPackage.value,
+    buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, gitHeadCommit)
+  )
 }

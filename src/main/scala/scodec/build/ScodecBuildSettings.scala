@@ -81,7 +81,7 @@ object ScodecBuildSettings extends AutoPlugin {
         "-doc-source-url", githubHttpUrl.value + "tree/" + tagOrBranch + "€{FILE_PATH}.scala"
       )
     },
-    testOptions in Test += Tests.Argument("-oD"),
+    testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oD"),
     crossBuild := true
   )
 

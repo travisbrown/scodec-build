@@ -136,21 +136,27 @@ object ScodecBuildSettings extends AutoPlugin {
     }
   )
 
-  private def releaseSettings = ReleasePlugin.releaseSettings ++ Seq(
-    releaseProcess := Seq[ReleaseStep](
-      checkSnapshotDependencies,
-      inquireVersions,
-      runTest,
-      setReleaseVersion,
-      commitReleaseVersion,
-      tagRelease,
-      publishArtifacts.copy(action = publishSignedAction),
-      releaseTask(GhPagesKeys.pushSite),
-      setNextVersion,
-      commitNextVersion,
-      pushChanges
+  private def releaseSettings = {
+    val publishSite = (ref: ProjectRef) => ReleaseStep(
+      check = releaseTask(SiteKeys.makeSite in ref),
+      action = releaseTask(GhPagesKeys.pushSite in ref)
     )
-  )
+    ReleasePlugin.releaseSettings ++ Seq(
+      releaseProcess := Seq[ReleaseStep](
+        checkSnapshotDependencies,
+        inquireVersions,
+        runTest,
+        setReleaseVersion,
+        commitReleaseVersion,
+        tagRelease,
+        publishArtifacts.copy(action = publishSignedAction),
+        publishSite(thisProjectRef.value),
+        setNextVersion,
+        commitNextVersion,
+        pushChanges
+      )
+    )
+  }
 
   private lazy val publishSignedAction = { st: State =>
     val extracted = st.extract

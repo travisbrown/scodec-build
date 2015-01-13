@@ -142,6 +142,7 @@ object ScodecBuildSettings extends AutoPlugin {
       action = releaseTask(GhPagesKeys.pushSite in ref)
     )
     ReleasePlugin.releaseSettings ++ Seq(
+      ReleaseKeys.crossBuild := true,
       releaseProcess := Seq[ReleaseStep](
         checkSnapshotDependencies,
         inquireVersions,

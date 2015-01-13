@@ -145,6 +145,7 @@ object ScodecBuildSettings extends AutoPlugin {
       commitReleaseVersion,
       tagRelease,
       publishArtifacts.copy(action = publishSignedAction),
+      releaseTask(GhPagesKeys.pushSite),
       setNextVersion,
       commitNextVersion,
       pushChanges

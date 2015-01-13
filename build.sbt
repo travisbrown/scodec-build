@@ -19,7 +19,7 @@ addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.6")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.1.6")
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.3.2")
 
-licenses += ("Three-clause BSD-style", url("https://github.com/scodec/scodec-build/blob/master/LICENSE")),
+licenses += ("Three-clause BSD-style", url("https://github.com/scodec/scodec-build/blob/master/LICENSE"))
 
 publishTo <<= version { v: String =>
   val nexus = "https://oss.sonatype.org/"

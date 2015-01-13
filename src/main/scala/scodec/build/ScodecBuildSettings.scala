@@ -208,9 +208,9 @@ object ScodecBuildSettings extends AutoPlugin {
     else Some(s"$x.$y.${z.toInt - 1}")
   }
 
-  override def projectSettings = keySettings ++ ivySettings ++ scalaSettings ++ publishingSettings ++ releaseSettings ++ mimaSettings
+  override def projectSettings = keySettings ++ ivySettings ++ scalaSettings ++ publishingSettings ++ releaseSettings
 
-  def scodecPrimaryModuleSettings: Seq[Setting[_]] = siteSettings ++ osgiSettings ++ Seq( 
+  def scodecPrimaryModuleSettings: Seq[Setting[_]] = siteSettings ++ osgiSettings ++ mimaSettings ++ Seq(
     name := scodecModule.value,
     autoAPIMappings := true,
     apiURL := Some(url(s"http://scodec.org/api/${scodecModule.value}/${version.value}/")),

@@ -43,7 +43,7 @@ object ScodecBuildSettings extends AutoPlugin {
   import autoImport._
 
   private def keySettings = Seq(
-    githubHttpUrl := "https://github.com/scodec/${scodecModule.value}/",
+    githubHttpUrl := s"https://github.com/scodec/${scodecModule.value}/",
     contributors := Seq.empty
   )
 
@@ -69,7 +69,7 @@ object ScodecBuildSettings extends AutoPlugin {
       "-Yinline"),
     scalacOptions in (Compile, doc) ++= {
       val tagOrBranch = {
-        if (version.value endsWith "SNAPSHOT") gitCurrentBranch.value 
+        if (version.value endsWith "SNAPSHOT") gitCurrentBranch.value
         else ("v" + version.value)
       }
       Seq(
@@ -142,6 +142,7 @@ object ScodecBuildSettings extends AutoPlugin {
       action = releaseTask(GhPagesKeys.pushSite in ref)
     )
     ReleasePlugin.releaseSettings ++ Seq(
+      ReleaseKeys.crossBuild := true,
       releaseProcess := Seq[ReleaseStep](
         checkSnapshotDependencies,
         inquireVersions,

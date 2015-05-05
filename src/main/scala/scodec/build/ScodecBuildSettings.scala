@@ -59,14 +59,22 @@ object ScodecBuildSettings extends AutoPlugin {
     scalaVersion := "2.11.4",
     crossScalaVersions := Seq("2.11.4", "2.10.4"),
     scalacOptions ++= Seq(
-      "-feature",
       "-deprecation",
+      "-encoding", "UTF-8",
+      "-feature",
       "-unchecked",
-      "-Xcheckinit",
       "-Xlint",
-      "-Xverify",
+      "-Yno-adapted-args",
+      "-Ywarn-dead-code",
+      "-Ywarn-numeric-widen",
+      "-Ywarn-value-discard",
+      "-Xfuture",
       "-Yclosure-elim",
-      "-Yinline"),
+      "-Yinline"
+    ) ++ ifAtLeast(scalaBinaryVersion.value, "2.11.0")(
+      "-Xfatal-warnings",
+      "-Ywarn-unused-import"
+    ),
     scalacOptions in (Compile, doc) ++= {
       val tagOrBranch = {
         if (version.value endsWith "SNAPSHOT") gitCurrentBranch.value
@@ -84,6 +92,16 @@ object ScodecBuildSettings extends AutoPlugin {
     testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oD"),
     crossBuild := true
   )
+
+  private def ifAtLeast(scalaBinaryVersion: String, atLeastVersion: String)(options: String*): Seq[String] = {
+    case class ScalaBinaryVersion(major: Int, minor: Int) extends Ordered[ScalaBinaryVersion] {
+      def compare(that: ScalaBinaryVersion) = Ordering[(Int, Int)].compare((this.major, this.minor), (that.major, that.minor))
+    }
+    val Pattern = """(\d+)\.(\d+).*""".r
+    def getScalaBinaryVersion(v: String) = v match { case Pattern(major, minor) => ScalaBinaryVersion(major.toInt, minor.toInt) }
+    if (getScalaBinaryVersion(scalaBinaryVersion) >= getScalaBinaryVersion(atLeastVersion)) options
+    else Seq.empty
+  }
 
   private def osgiSettings = SbtOsgi.osgiSettings ++ Seq(
     OsgiKeys.exportPackage := Seq(rootPackage.value + ".*;version=${Bundle-Version}"),

@@ -3,9 +3,8 @@ package scodec.build
 import sbt._
 import Keys._
 import sbtrelease._
+import ReleasePlugin.autoImport._
 import ReleaseStateTransformations._
-import ReleasePlugin._
-import ReleaseKeys._
 import Utilities._
 import com.typesafe.sbt.osgi.SbtOsgi
 import SbtOsgi._
@@ -13,13 +12,16 @@ import com.typesafe.sbt.SbtGhPages._
 import com.typesafe.sbt.SbtGit._
 import GitKeys._
 import com.typesafe.sbt.git.GitRunner
-import com.typesafe.sbt.SbtPgp.PgpKeys._
+import com.typesafe.sbt.SbtPgp
+import SbtPgp.autoImport._
 import com.typesafe.sbt.SbtSite._
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
 import com.typesafe.tools.mima.plugin.MimaKeys._
-import pl.project13.scala.sbt.SbtJmh._
-import sbtbuildinfo.Plugin._
+import pl.project13.scala.sbt.SbtJmh
+import SbtJmh.autoImport._
+import sbtbuildinfo.BuildInfoPlugin
+import BuildInfoPlugin.autoImport._
 
 
 object ScodecBuildSettings extends AutoPlugin {
@@ -55,7 +57,7 @@ object ScodecBuildSettings extends AutoPlugin {
     git.remoteRepo := "git@github.com:scodec/${scodecModule.value}.git"
   )
 
-  private def scalaSettings = buildInfoSettings ++ Seq(
+  private def scalaSettings = Seq(
     scalaVersion := "2.11.4",
     crossScalaVersions := Seq("2.11.4", "2.10.4"),
     scalacOptions ++= Seq(
@@ -89,8 +91,7 @@ object ScodecBuildSettings extends AutoPlugin {
         "-doc-source-url", githubHttpUrl.value + "tree/" + tagOrBranch + "€{FILE_PATH}.scala"
       )
     },
-    testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oD"),
-    crossBuild := true
+    testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oD")
   )
 
   private def ifAtLeast(scalaBinaryVersion: String, atLeastVersion: String)(options: String*): Seq[String] = {
@@ -151,7 +152,9 @@ object ScodecBuildSettings extends AutoPlugin {
       }
       val stripTestScope = stripIf { n => n.label == "dependency" && (n \ "scope").text == "test" }
       new RuleTransformer(stripTestScope).transform(node)(0)
-    }
+    },
+    useGpg := true,
+    useGpgAgent := true
   )
 
   private def releaseSettings = {
@@ -159,8 +162,9 @@ object ScodecBuildSettings extends AutoPlugin {
       check = releaseTask(SiteKeys.makeSite in ref),
       action = releaseTask(GhPagesKeys.pushSite in ref)
     )
-    ReleasePlugin.releaseSettings ++ Seq(
-      ReleaseKeys.crossBuild := true,
+    Seq(
+      releaseCrossBuild := true,
+      releasePublishArtifactsAction := PgpKeys.publishSigned.value,
       releaseProcess := Seq[ReleaseStep](
         checkSnapshotDependencies,
         inquireVersions,
@@ -168,19 +172,13 @@ object ScodecBuildSettings extends AutoPlugin {
         setReleaseVersion,
         commitReleaseVersion,
         tagRelease,
-        publishArtifacts.copy(action = publishSignedAction),
+        publishArtifacts,
         publishSite(thisProjectRef.value),
         setNextVersion,
         commitNextVersion,
         pushChanges
       )
     )
-  }
-
-  private lazy val publishSignedAction = { st: State =>
-    val extracted = st.extract
-    val ref = extracted.get(thisProjectRef)
-    extracted.runAggregated(publishSigned in Global in ref, st)
   }
 
   private def siteSettings = site.settings ++ ghpages.settings ++ site.includeScaladoc() ++ Seq(
@@ -240,7 +238,6 @@ object ScodecBuildSettings extends AutoPlugin {
     name := scodecModule.value,
     autoAPIMappings := true,
     apiURL := Some(url(s"http://scodec.org/api/${scodecModule.value}/${version.value}/")),
-    sourceGenerators in Compile <+= buildInfo,
     buildInfoPackage := rootPackage.value,
     buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, gitHeadCommit)
   )

@@ -71,8 +71,8 @@ object ScodecBuildSettings extends AutoPlugin {
   )
 
   private def scalaSettings = Seq(
-    scalaVersion := "2.11.4",
-    crossScalaVersions := Seq("2.11.4", "2.10.4", "2.12.0-M1"),
+    scalaVersion := "2.11.6",
+    crossScalaVersions := Seq("2.11.6", "2.10.5", "2.12.0-M1"),
     scalacOptions ++= Seq(
       "-deprecation",
       "-encoding", "UTF-8",

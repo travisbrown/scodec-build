@@ -90,7 +90,7 @@ object ScodecBuildSettings extends AutoPlugin {
       "-Xfatal-warnings",
       "-Ywarn-unused-import"
     ),
-    scalacOptions in (Compile, doc) ++= {
+    scalacOptions in (Compile, doc) := scalacOptions.value.filter { _ != "-Xfatal-warnings" } ++ {
       val tagOrBranch = {
         if (version.value endsWith "SNAPSHOT") gitCurrentBranch.value
         else ("v" + version.value)

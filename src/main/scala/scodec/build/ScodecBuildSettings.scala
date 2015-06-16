@@ -22,7 +22,8 @@ import pl.project13.scala.sbt.SbtJmh
 import SbtJmh.autoImport._
 import sbtbuildinfo.BuildInfoPlugin
 import BuildInfoPlugin.autoImport._
-
+import org.scalajs.sbtplugin.ScalaJSPlugin
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 
 object ScodecBuildSettings extends AutoPlugin {
 
@@ -41,6 +42,18 @@ object ScodecBuildSettings extends AutoPlugin {
     lazy val rootPackage = settingKey[String]("Root package of the project")
 
     lazy val scodecPrimaryModule = scodecPrimaryModuleSettings
+
+    def commonJsSettings: Seq[Setting[_]] = Seq(
+      requiresDOM := false,
+      scalaJSStage in Test := FastOptStage,
+      jsEnv in Test := NodeJSEnv().value,
+      scalacOptions ++= (if (isSnapshot.value) Seq.empty else Seq({
+        val dir = project.base.toURI.toString.replaceFirst("[^/]+/?$", "")
+        val url = s"https://raw.githubusercontent.com/scodec/${scodecModule.value}"
+        val tag = "v" + version.value
+        s"-P:scalajs:mapSourceURI:$dir->$url/$tag/"
+      }))
+  )
   }
   import autoImport._
 
@@ -59,7 +72,7 @@ object ScodecBuildSettings extends AutoPlugin {
 
   private def scalaSettings = Seq(
     scalaVersion := "2.11.4",
-    crossScalaVersions := Seq("2.11.4", "2.10.4"),
+    crossScalaVersions := Seq("2.11.4", "2.10.4", "2.12.0-M1"),
     scalacOptions ++= Seq(
       "-deprecation",
       "-encoding", "UTF-8",

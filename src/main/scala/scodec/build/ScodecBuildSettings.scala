@@ -45,7 +45,7 @@ object ScodecBuildSettings extends AutoPlugin {
 
     def commonJsSettings: Seq[Setting[_]] = Seq(
       requiresDOM := false,
-      scalaJSStage in Test := FullOptStage,
+      scalaJSStage in Test := FastOptStage,
       jsEnv in Test := NodeJSEnv().value,
       scalacOptions ++= (if (isSnapshot.value) Seq.empty else Seq({
         val dir = project.base.toURI.toString.replaceFirst("[^/]+/?$", "")

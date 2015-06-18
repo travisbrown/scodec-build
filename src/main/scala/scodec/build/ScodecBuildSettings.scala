@@ -47,12 +47,15 @@ object ScodecBuildSettings extends AutoPlugin {
       requiresDOM := false,
       scalaJSStage in Test := FastOptStage,
       jsEnv in Test := NodeJSEnv().value,
-      scalacOptions ++= (if (isSnapshot.value) Seq.empty else Seq({
+      scalacOptions in Compile += {
         val dir = project.base.toURI.toString.replaceFirst("[^/]+/?$", "")
         val url = s"https://raw.githubusercontent.com/scodec/${scodecModule.value}"
-        val tag = "v" + version.value
-        s"-P:scalajs:mapSourceURI:$dir->$url/$tag/"
-      }))
+        val tagOrBranch = {
+          if (version.value endsWith "SNAPSHOT") gitCurrentBranch.value
+          else ("v" + version.value)
+        }
+        s"-P:scalajs:mapSourceURI:$dir->$url/$tagOrBranch/"
+      }
   )
   }
   import autoImport._
@@ -90,7 +93,7 @@ object ScodecBuildSettings extends AutoPlugin {
       "-Xfatal-warnings",
       "-Ywarn-unused-import"
     ),
-    scalacOptions in (Compile, doc) := scalacOptions.value.filter { _ != "-Xfatal-warnings" } ++ {
+    scalacOptions in (Compile, doc) := (scalacOptions in (Compile, doc)).value.filter { _ != "-Xfatal-warnings" } ++ {
       val tagOrBranch = {
         if (version.value endsWith "SNAPSHOT") gitCurrentBranch.value
         else ("v" + version.value)

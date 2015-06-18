@@ -42,6 +42,7 @@ object ScodecBuildSettings extends AutoPlugin {
     lazy val rootPackage = settingKey[String]("Root package of the project")
 
     lazy val scodecPrimaryModule = scodecPrimaryModuleSettings
+    lazy val scodecPrimaryModuleJvm = scodecPrimaryModuleJvmSettings
 
     def commonJsSettings: Seq[Setting[_]] = Seq(
       requiresDOM := false,
@@ -250,11 +251,13 @@ object ScodecBuildSettings extends AutoPlugin {
 
   override def projectSettings = keySettings ++ ivySettings ++ scalaSettings ++ publishingSettings ++ releaseSettings
 
-  def scodecPrimaryModuleSettings: Seq[Setting[_]] = siteSettings ++ osgiSettings ++ mimaSettings ++ Seq(
+  def scodecPrimaryModuleSettings: Seq[Setting[_]] = Seq(
     name := scodecModule.value,
     autoAPIMappings := true,
     apiURL := Some(url(s"http://scodec.org/api/${scodecModule.value}/${version.value}/")),
     buildInfoPackage := rootPackage.value,
     buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, gitHeadCommit)
   )
+
+  def scodecPrimaryModuleJvmSettings: Seq[Setting[_]] = siteSettings ++ osgiSettings ++ mimaSettings
 }

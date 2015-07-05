@@ -108,6 +108,8 @@ object ScodecBuildSettings extends AutoPlugin {
         "-doc-source-url", githubHttpUrl.value + "tree/" + tagOrBranch + "€{FILE_PATH}.scala"
       )
     },
+    scalacOptions in (Compile, console) ~= { _ filterNot { o => o == "-Ywarn-unused-import" || o == "-Xfatal-warnings" } },
+    scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value,
     testOptions in Test += Tests.Argument(TestFrameworks.ScalaTest, "-oD")
   )
 

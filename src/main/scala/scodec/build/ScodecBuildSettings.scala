@@ -44,6 +44,8 @@ object ScodecBuildSettings extends AutoPlugin {
     lazy val scodecPrimaryModule = scodecPrimaryModuleSettings
     lazy val scodecPrimaryModuleJvm = scodecPrimaryModuleJvmSettings
 
+    lazy val docSourcePath = settingKey[File]("Path to pass as -sourcepath argument to ScalaDoc")
+
     def commonJsSettings: Seq[Setting[_]] = Seq(
       requiresDOM := false,
       scalaJSStage in Test := FastOptStage,
@@ -94,6 +96,7 @@ object ScodecBuildSettings extends AutoPlugin {
       "-Xfatal-warnings",
       "-Ywarn-unused-import"
     ),
+    docSourcePath := baseDirectory.value,
     scalacOptions in (Compile, doc) := (scalacOptions in (Compile, doc)).value.filter { _ != "-Xfatal-warnings" } ++ {
       val tagOrBranch = {
         if (version.value endsWith "SNAPSHOT") gitCurrentBranch.value
@@ -104,7 +107,7 @@ object ScodecBuildSettings extends AutoPlugin {
         "-groups",
         "-implicits",
         "-implicits-show-all",
-        "-sourcepath", baseDirectory.value.getAbsolutePath,
+        "-sourcepath", docSourcePath.value.getCanonicalPath,
         "-doc-source-url", githubHttpUrl.value + "tree/" + tagOrBranch + "€{FILE_PATH}.scala"
       )
     },

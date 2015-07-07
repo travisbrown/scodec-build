@@ -34,6 +34,8 @@ object ScodecBuildSettings extends AutoPlugin {
 
     lazy val scodecModule = settingKey[String]("Name of the scodec module (should match github repository name)")
 
+    lazy val githubProject = settingKey[String]("Name of the github project for this repository - defaults to scodecModule.value")
+
     lazy val githubHttpUrl = settingKey[String]("HTTP URL to the github repository")
 
     case class Contributor(name: String, githubUsername: String)
@@ -64,7 +66,8 @@ object ScodecBuildSettings extends AutoPlugin {
   import autoImport._
 
   private def keySettings = Seq(
-    githubHttpUrl := s"https://github.com/scodec/${scodecModule.value}/",
+    githubProject := scodecModule.value,
+    githubHttpUrl := s"https://github.com/scodec/${githubProject.value}/",
     contributors := Seq.empty
   )
 
@@ -73,7 +76,7 @@ object ScodecBuildSettings extends AutoPlugin {
     organizationHomepage := Some(new URL("http://scodec.org")),
     licenses += ("Three-clause BSD-style", url(githubHttpUrl.value + "blob/master/LICENSE")),
     unmanagedResources in Compile <++= baseDirectory map { base => (base / "NOTICE") +: (base / "LICENSE") +: ((base / "licenses") * "LICENSE_*").get },
-    git.remoteRepo := "git@github.com:scodec/${scodecModule.value}.git"
+    git.remoteRepo := "git@github.com:scodec/${githubProject.value}.git"
   )
 
   private def scalaSettings = Seq(
@@ -150,10 +153,10 @@ object ScodecBuildSettings extends AutoPlugin {
     publishArtifact in Test := false,
     pomIncludeRepository := { x => false },
     pomExtra := (
-      <url>http://github.com/scodec/{scodecModule.value}</url>
+      <url>http://github.com/scodec/{githubProject.value}</url>
       <scm>
-        <url>git@github.com:scodec/{scodecModule.value}.git</url>
-        <connection>scm:git:git@github.com:scodec/{scodecModule.value}.git</connection>
+        <url>git@github.com:scodec/{githubProject.value}.git</url>
+        <connection>scm:git:git@github.com:scodec/{githubProject.value}.git</connection>
       </scm>
       <developers>
         {for (Contributor(name, username) <- contributors.value) yield

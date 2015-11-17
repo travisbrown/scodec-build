@@ -105,14 +105,14 @@ object ScodecBuildSettings extends AutoPlugin {
         if (version.value endsWith "SNAPSHOT") gitCurrentBranch.value
         else ("v" + version.value)
       }
-      Seq(
-        "-diagrams",
+      val options = Seq(
         "-groups",
         "-implicits",
         "-implicits-show-all",
         "-sourcepath", docSourcePath.value.getCanonicalPath,
         "-doc-source-url", githubHttpUrl.value + "tree/" + tagOrBranch + "€{FILE_PATH}.scala"
       )
+      if (!scalaBinaryVersion.value.startsWith("2.10")) "-diagrams" +: options else options
     },
     scalacOptions in (Compile, console) ~= { _ filterNot { o => o == "-Ywarn-unused-import" || o == "-Xfatal-warnings" } },
     scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value,

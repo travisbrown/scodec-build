@@ -94,11 +94,10 @@ object ScodecBuildSettings extends AutoPlugin {
       "-Ywarn-value-discard",
       "-Xfuture"
     ) ++ ifAtLeast(scalaBinaryVersion.value, "2.11.0")(
-      "-Xfatal-warnings",
       "-Ywarn-unused-import"
     ),
     docSourcePath := baseDirectory.value,
-    scalacOptions in (Compile, doc) := (scalacOptions in (Compile, doc)).value.filter { _ != "-Xfatal-warnings" } ++ {
+    scalacOptions in (Compile, doc) := {
       val tagOrBranch = {
         if (version.value endsWith "SNAPSHOT") gitCurrentBranch.value
         else ("v" + version.value)

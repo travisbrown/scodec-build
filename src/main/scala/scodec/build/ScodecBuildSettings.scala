@@ -38,7 +38,7 @@ object ScodecBuildSettings extends AutoPlugin {
 
     lazy val githubHttpUrl = settingKey[String]("HTTP URL to the github repository")
 
-    case class Contributor(name: String, githubUsername: String)
+    case class Contributor(githubUsername: String, name: String)
     lazy val contributors = settingKey[Seq[Contributor]]("Contributors to the project")
 
     lazy val rootPackage = settingKey[String]("Root package of the project")
@@ -81,7 +81,7 @@ object ScodecBuildSettings extends AutoPlugin {
 
   private def scalaSettings = Seq(
     scalaVersion := "2.11.8",
-    crossScalaVersions := Seq("2.11.8", "2.10.6", "2.12.0-M4"),
+    crossScalaVersions := Seq("2.11.8", "2.10.6", "2.12.0-M5"),
     scalacOptions ++= Seq(
       "-deprecation",
       "-encoding", "UTF-8",
@@ -156,7 +156,7 @@ object ScodecBuildSettings extends AutoPlugin {
         <connection>scm:git:git@github.com:scodec/{githubProject.value}.git</connection>
       </scm>
       <developers>
-        {for (Contributor(name, username) <- contributors.value) yield
+        {for (Contributor(username, name) <- contributors.value) yield
         <developer>
           <id>{username}</id>
           <name>{name}</name>

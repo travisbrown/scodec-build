@@ -242,9 +242,9 @@ object ScodecBuildSettings extends AutoPlugin {
   }
 
   private def mimaSettings = mimaDefaultSettings ++ Seq(
-    previousArtifact := previousVersion(version.value) map { pv =>
+    previousArtifacts := previousVersion(version.value).map { pv =>
       organization.value % (normalizedName.value + "_" + scalaBinaryVersion.value) % pv
-    }
+    }.toSet
   )
 
   private def previousVersion(currentVersion: String): Option[String] = {

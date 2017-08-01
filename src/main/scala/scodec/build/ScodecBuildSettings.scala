@@ -8,13 +8,15 @@ import ReleaseStateTransformations._
 import Utilities._
 import com.typesafe.sbt.osgi.SbtOsgi
 import SbtOsgi._
-import com.typesafe.sbt.SbtGhPages._
 import com.typesafe.sbt.SbtGit._
+import com.typesafe.sbt.sbtghpages.GhpagesPlugin
+import com.typesafe.sbt.sbtghpages.GhpagesPlugin.autoImport._
 import GitKeys._
 import com.typesafe.sbt.git.GitRunner
 import com.typesafe.sbt.SbtPgp
 import SbtPgp.autoImport._
-import com.typesafe.sbt.SbtSite._
+import com.typesafe.sbt.site._
+import com.typesafe.sbt.site.SitePlugin.autoImport._
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
 import com.typesafe.tools.mima.plugin.MimaKeys._
@@ -24,6 +26,7 @@ import sbtbuildinfo.BuildInfoPlugin
 import BuildInfoPlugin.autoImport._
 import org.scalajs.sbtplugin.ScalaJSPlugin
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+import org.scalajs.jsenv.nodejs.NodeJSEnv
 
 object ScodecBuildSettings extends AutoPlugin {
 
@@ -43,15 +46,12 @@ object ScodecBuildSettings extends AutoPlugin {
 
     lazy val rootPackage = settingKey[String]("Root package of the project")
 
-    lazy val scodecPrimaryModule = scodecPrimaryModuleSettings
-    lazy val scodecPrimaryModuleJvm = scodecPrimaryModuleJvmSettings
-
     lazy val docSourcePath = settingKey[File]("Path to pass as -sourcepath argument to ScalaDoc")
 
     def commonJsSettings: Seq[Setting[_]] = Seq(
       requiresDOM := false,
       scalaJSStage in Test := FastOptStage,
-      jsEnv in Test := NodeJSEnv().value,
+      jsEnv in Test := new NodeJSEnv(),
       scalacOptions in Compile += {
         val dir = project.base.toURI.toString.replaceFirst("[^/]+/?$", "")
         val url = s"https://raw.githubusercontent.com/scodec/${scodecModule.value}"
@@ -75,13 +75,16 @@ object ScodecBuildSettings extends AutoPlugin {
     organization := "org.scodec",
     organizationHomepage := Some(new URL("http://scodec.org")),
     licenses += ("Three-clause BSD-style", url(githubHttpUrl.value + "blob/master/LICENSE")),
-    unmanagedResources in Compile <++= baseDirectory map { base => (base / "NOTICE") +: (base / "LICENSE") +: ((base / "licenses") * "LICENSE_*").get },
+    unmanagedResources in Compile ++= {
+      val base = baseDirectory.value
+      (base / "NOTICE") +: (base / "LICENSE") +: ((base / "licenses") * "LICENSE_*").get
+    },
     git.remoteRepo := "git@github.com:scodec/${githubProject.value}.git"
   )
 
   private def scalaSettings = Seq(
-    scalaVersion := "2.11.8",
-    crossScalaVersions := Seq("2.11.8", "2.10.6", "2.12.1", "2.13.0-M1"),
+    scalaVersion := "2.11.11",
+    crossScalaVersions := Seq("2.11.11", "2.12.3", "2.13.0-M1"),
     scalacOptions ++= Seq(
       "-deprecation",
       "-encoding", "UTF-8",
@@ -102,14 +105,14 @@ object ScodecBuildSettings extends AutoPlugin {
         if (version.value endsWith "SNAPSHOT") gitCurrentBranch.value
         else ("v" + version.value)
       }
-      val options = Seq(
+      Seq(
+        "-diagrams",
         "-groups",
         "-implicits",
         "-implicits-show-all",
         "-sourcepath", docSourcePath.value.getCanonicalPath,
         "-doc-source-url", githubHttpUrl.value + "tree/" + tagOrBranch + "€{FILE_PATH}.scala"
       )
-      if (!scalaBinaryVersion.value.startsWith("2.10")) "-diagrams" +: options else options
     },
     scalacOptions in (Compile, console) ~= { _ filterNot { o => o == "-Ywarn-unused-import" || o == "-Xfatal-warnings" } },
     scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value,
@@ -126,22 +129,11 @@ object ScodecBuildSettings extends AutoPlugin {
     else Seq.empty
   }
 
-  private def osgiSettings = SbtOsgi.osgiSettings ++ Seq(
-    OsgiKeys.exportPackage := Seq(rootPackage.value + ".*;version=${Bundle-Version}"),
-    OsgiKeys.importPackage := Seq(
-      """scodec.*;version="$<range;[==,=+);$<@>>"""",
-      """scala.*;version="$<range;[==,=+);$<@>>"""",
-      """shapeless.*;version="$<range;[==,=+);$<@>>"""",
-      "*"
-    ),
-    OsgiKeys.additionalHeaders := Map("-removeheaders" -> "Include-Resource,Private-Package")
-  )
-
   private def publishingSettings = Seq(
     resolvers += "Sonatype Public" at "https://oss.sonatype.org/content/groups/public/",
-    publishTo <<= version { v: String =>
+    publishTo := {
       val nexus = "https://oss.sonatype.org/"
-      if (v.trim.endsWith("SNAPSHOT"))
+      if (version.value.trim.endsWith("SNAPSHOT"))
         Some("snapshots" at nexus + "content/repositories/snapshots")
       else
         Some("releases" at nexus + "service/local/staging/deploy/maven2")
@@ -181,8 +173,8 @@ object ScodecBuildSettings extends AutoPlugin {
 
   private def releaseSettings = {
     val publishSite = (ref: ProjectRef) => ReleaseStep(
-      check = releaseTask(SiteKeys.makeSite in ref),
-      action = releaseTask(GhPagesKeys.pushSite in ref)
+      check = releaseStepTaskAggregated(makeSite in ref),
+      action = releaseStepTaskAggregated(ghpagesPushSite in ref)
     )
     Seq(
       releaseCrossBuild := true,
@@ -203,16 +195,51 @@ object ScodecBuildSettings extends AutoPlugin {
     )
   }
 
-  private def siteSettings = site.settings ++ ghpages.settings ++ site.includeScaladoc() ++ Seq(
+  override def projectSettings = keySettings ++ ivySettings ++ scalaSettings ++ publishingSettings ++ releaseSettings
+
+}
+
+object ScodecPrimaryModuleSettings extends AutoPlugin {
+
+  override def requires = ScodecBuildSettings
+  override def trigger = noTrigger
+
+  import ScodecBuildSettings.autoImport._
+
+  override def projectSettings = Seq(
+    name := scodecModule.value,
+    autoAPIMappings := true,
+    apiURL := Some(url(s"http://scodec.org/api/${scodecModule.value}/${version.value}/")),
+    buildInfoPackage := rootPackage.value,
+    buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, gitHeadCommit)
+  )
+
+}
+
+object ScodecPrimaryModuleJVMSettings extends AutoPlugin {
+
+  override def requires = ScodecPrimaryModuleSettings && SiteScaladocPlugin && GhpagesPlugin
+  override def trigger = noTrigger
+
+  import ScodecBuildSettings.autoImport._
+
+  // From https://github.com/sbt/website/blob/4ff41b9ad8b9a3613e559429555689090cb9fa29/project/Docs.scala
+  private def gitRemoveFiles(dir: File, files: List[File], git: GitRunner, s: TaskStreams): Unit = {
+    if(!files.isEmpty)
+      git(("rm" :: "-r" :: "-f" :: "--ignore-unmatch" :: files.map(_.getAbsolutePath)) :_*)(dir, s.log)
+    ()
+  }
+
+  private def siteSettings = Seq(
     git.remoteRepo := "git@github.com:scodec/scodec.github.io.git",
-    GitKeys.gitBranch in GhPagesKeys.updatedRepository := Some("master"),
-    SiteKeys.siteMappings ++= {
+    GitKeys.gitBranch in ghpagesUpdatedRepository := Some("master"),
+    siteMappings ++= {
       val m = (mappings in packageDoc in Compile).value
       for((f, d) <- m) yield (f, d)
     },
-    GhPagesKeys.synchLocal := {
+    ghpagesSynchLocal := {
       // Adapted from https://github.com/sbt/website/blob/4ff41b9ad8b9a3613e559429555689090cb9fa29/project/Docs.scala
-      val repo = GhPagesKeys.updatedRepository.value
+      val repo = ghpagesUpdatedRepository.value
       val nonversioned = repo / "api" / scodecModule.value
       val versioned = nonversioned / version.value
       val git = GitKeys.gitRunner.value
@@ -226,7 +253,7 @@ object ScodecBuildSettings extends AutoPlugin {
       }
 
       val mappings =  for {
-        (file, target) <- SiteKeys.siteMappings.value
+        (file, target) <- siteMappings.value
       } yield (file, versioned / target)
       IO.copy(mappings)
 
@@ -234,12 +261,16 @@ object ScodecBuildSettings extends AutoPlugin {
     }
   )
 
-  // From https://github.com/sbt/website/blob/4ff41b9ad8b9a3613e559429555689090cb9fa29/project/Docs.scala
-  private def gitRemoveFiles(dir: File, files: List[File], git: GitRunner, s: TaskStreams): Unit = {
-    if(!files.isEmpty)
-      git(("rm" :: "-r" :: "-f" :: "--ignore-unmatch" :: files.map(_.getAbsolutePath)) :_*)(dir, s.log)
-    ()
-  }
+  private def osgiSettings = SbtOsgi.osgiSettings ++ Seq(
+    OsgiKeys.exportPackage := Seq(rootPackage.value + ".*;version=${Bundle-Version}"),
+    OsgiKeys.importPackage := Seq(
+      """scodec.*;version="$<range;[==,=+);$<@>>"""",
+      """scala.*;version="$<range;[==,=+);$<@>>"""",
+      """shapeless.*;version="$<range;[==,=+);$<@>>"""",
+      "*"
+    ),
+    OsgiKeys.additionalHeaders := Map("-removeheaders" -> "Include-Resource,Private-Package")
+  )
 
   private def mimaSettings = mimaDefaultSettings ++ Seq(
     previousArtifacts := previousVersion(version.value).map { pv =>
@@ -254,15 +285,6 @@ object ScodecBuildSettings extends AutoPlugin {
     else Some(s"$x.$y.${z.toInt - 1}")
   }
 
-  override def projectSettings = keySettings ++ ivySettings ++ scalaSettings ++ publishingSettings ++ releaseSettings
+  override def projectSettings = siteSettings ++ osgiSettings ++ mimaSettings
 
-  def scodecPrimaryModuleSettings: Seq[Setting[_]] = Seq(
-    name := scodecModule.value,
-    autoAPIMappings := true,
-    apiURL := Some(url(s"http://scodec.org/api/${scodecModule.value}/${version.value}/")),
-    buildInfoPackage := rootPackage.value,
-    buildInfoKeys := Seq[BuildInfoKey](version, scalaVersion, gitHeadCommit)
-  )
-
-  def scodecPrimaryModuleJvmSettings: Seq[Setting[_]] = siteSettings ++ osgiSettings ++ mimaSettings
 }

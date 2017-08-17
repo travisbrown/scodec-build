@@ -11,21 +11,21 @@ sbtPlugin := true
 resolvers += "jgit-repo" at "http://download.eclipse.org/jgit/maven"
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-osgi" % "0.7.0")
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.0")
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "1.1")
-addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.0.0")
-addSbtPlugin("com.typesafe.sbt" % "sbt-site" % "0.8.2")
-addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.5.4")
+addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.6")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.0")
+addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.0-M1")
+addSbtPlugin("com.typesafe.sbt" % "sbt-site" % "1.0.0")
+addSbtPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.0")
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.8")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.2.16")
-addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.6.1")
+addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.7.0")
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.18")
 
 licenses += ("Three-clause BSD-style", url("https://github.com/scodec/scodec-build/blob/master/LICENSE"))
 
-publishTo <<= version { v: String =>
+publishTo := {
   val nexus = "https://oss.sonatype.org/"
-  if (v.trim.endsWith("SNAPSHOT"))
+  if (version.value.trim.endsWith("SNAPSHOT"))
     Some("snapshots" at nexus + "content/repositories/snapshots")
   else
     Some("releases" at nexus + "service/local/staging/deploy/maven2")

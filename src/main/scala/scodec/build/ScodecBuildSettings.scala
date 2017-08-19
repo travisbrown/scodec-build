@@ -24,9 +24,6 @@ import pl.project13.scala.sbt.SbtJmh
 import SbtJmh.autoImport._
 import sbtbuildinfo.BuildInfoPlugin
 import BuildInfoPlugin.autoImport._
-import org.scalajs.sbtplugin.ScalaJSPlugin
-import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
-import org.scalajs.jsenv.nodejs.NodeJSEnv
 
 object ScodecBuildSettings extends AutoPlugin {
 
@@ -49,9 +46,6 @@ object ScodecBuildSettings extends AutoPlugin {
     lazy val docSourcePath = settingKey[File]("Path to pass as -sourcepath argument to ScalaDoc")
 
     def commonJsSettings: Seq[Setting[_]] = Seq(
-      requiresDOM := false,
-      scalaJSStage in Test := FastOptStage,
-      jsEnv in Test := new NodeJSEnv(),
       scalacOptions in Compile += {
         val dir = project.base.toURI.toString.replaceFirst("[^/]+/?$", "")
         val url = s"https://raw.githubusercontent.com/scodec/${scodecModule.value}"

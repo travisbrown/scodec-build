@@ -7,7 +7,7 @@ import ReleasePlugin.autoImport._
 import ReleaseStateTransformations._
 import Utilities._
 import com.typesafe.sbt.osgi.SbtOsgi
-import SbtOsgi._
+import com.typesafe.sbt.osgi.OsgiKeys
 import com.typesafe.sbt.SbtGit._
 import com.typesafe.sbt.sbtghpages.GhpagesPlugin
 import com.typesafe.sbt.sbtghpages.GhpagesPlugin.autoImport._
@@ -237,13 +237,14 @@ object ScodecPrimaryModuleJVMSettings extends AutoPlugin {
       val nonversioned = repo / "api" / scodecModule.value
       val versioned = nonversioned / version.value
       val git = GitKeys.gitRunner.value
+      val s = streams.value
 
       gitRemoveFiles(repo, IO.listFiles(versioned).toList, git, streams.value)
       if (!version.value.endsWith("-SNAPSHOT")) {
         val snapshotVersion = version.value + "-SNAPSHOT"
         val snapshotVersioned = nonversioned / snapshotVersion
         if (snapshotVersioned.exists)
-          gitRemoveFiles(repo, IO.listFiles(snapshotVersioned).toList, git, streams.value)
+          gitRemoveFiles(repo, IO.listFiles(snapshotVersioned).toList, git, s)
       }
 
       val mappings =  for {
@@ -255,7 +256,7 @@ object ScodecPrimaryModuleJVMSettings extends AutoPlugin {
     }
   )
 
-  private def osgiSettings = SbtOsgi.osgiSettings ++ Seq(
+  private def osgiSettings = SbtOsgi.projectSettings ++ Seq(
     OsgiKeys.exportPackage := Seq(rootPackage.value + ".*;version=${Bundle-Version}"),
     OsgiKeys.importPackage := Seq(
       """scodec.*;version="$<range;[==,=+);$<@>>"""",
@@ -267,7 +268,7 @@ object ScodecPrimaryModuleJVMSettings extends AutoPlugin {
   )
 
   private def mimaSettings = mimaDefaultSettings ++ Seq(
-    previousArtifacts := previousVersion(version.value).map { pv =>
+    mimaPreviousArtifacts := previousVersion(version.value).map { pv =>
       organization.value % (normalizedName.value + "_" + scalaBinaryVersion.value) % pv
     }.toSet
   )

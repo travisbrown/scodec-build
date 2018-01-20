@@ -6,6 +6,8 @@ import ReleaseKeys._
 organization := "org.scodec"
 name := "scodec-build"
 
+crossSbtVersions := Seq("0.13.16", "1.1.0")
+
 sbtPlugin := true
 
 resolvers += "jgit-repo" at "http://download.eclipse.org/jgit/maven"

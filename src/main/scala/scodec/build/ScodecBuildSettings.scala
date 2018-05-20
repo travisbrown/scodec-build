@@ -85,11 +85,12 @@ object ScodecBuildSettings extends AutoPlugin {
       "-feature",
       "-unchecked",
       "-Xlint",
-      "-Yno-adapted-args",
       "-Ywarn-dead-code",
       "-Ywarn-numeric-widen",
       "-Ywarn-value-discard",
       "-Xfuture"
+    ) ++ ifAtLeast("2.13", scalaVersion.value)(
+      "-Yno-adapted-args"
     ) ++ ifAtLeast(scalaBinaryVersion.value, "2.11.0")(
       "-Ywarn-unused-import"
     ),

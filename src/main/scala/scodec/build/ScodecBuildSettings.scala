@@ -138,10 +138,6 @@ object ScodecBuildSettings extends AutoPlugin {
     pomIncludeRepository := { x => false },
     pomExtra := (
       <url>http://github.com/scodec/{githubProject.value}</url>
-      <scm>
-        <url>git@github.com:scodec/{githubProject.value}.git</url>
-        <connection>scm:git:git@github.com:scodec/{githubProject.value}.git</connection>
-      </scm>
       <developers>
         {for (Contributor(username, name) <- contributors.value) yield
         <developer>

@@ -6,7 +6,7 @@ import ReleaseKeys._
 organization := "org.scodec"
 name := "scodec-build"
 
-crossSbtVersions := Seq("0.13.16", "1.1.0")
+crossSbtVersions := Seq("1.2.0")
 
 sbtPlugin := true
 
@@ -15,7 +15,7 @@ resolvers += "jgit-repo" at "http://download.eclipse.org/jgit/maven"
 addPlugin("com.typesafe.sbt" % "sbt-osgi" % "0.9.2")
 addPlugin("com.github.gseitz" % "sbt-release" % "1.0.7")
 addPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.0")
-addPlugin("com.jsuereth" % "sbt-pgp" % "1.1.0")
+addPlugin("io.crashbox" % "sbt-gpg" % "0.2.0")
 addPlugin("com.typesafe.sbt" % "sbt-site" % "1.3.1")
 addPlugin("com.typesafe.sbt" % "sbt-ghpages" % "0.6.2")
 addPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.18")
@@ -57,9 +57,6 @@ pomExtra := (
     </developer>
   </developers>
 )
-
-useGpg := true
-useGpgAgent := true
 
 import ReleaseTransformations._
 releaseProcess := Seq[ReleaseStep](

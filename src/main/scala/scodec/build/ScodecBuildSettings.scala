@@ -13,8 +13,6 @@ import com.typesafe.sbt.sbtghpages.GhpagesPlugin
 import com.typesafe.sbt.sbtghpages.GhpagesPlugin.autoImport._
 import GitKeys._
 import com.typesafe.sbt.git.GitRunner
-import com.typesafe.sbt.SbtPgp
-import SbtPgp.autoImport._
 import com.typesafe.sbt.site._
 import com.typesafe.sbt.site.SitePlugin.autoImport._
 import com.typesafe.tools.mima.core._
@@ -78,7 +76,7 @@ object ScodecBuildSettings extends AutoPlugin {
 
   private def scalaSettings = Seq(
     scalaVersion := "2.11.12",
-    crossScalaVersions := Seq("2.11.12", "2.12.6", "2.13.0-M4"),
+    crossScalaVersions := Seq("2.11.12", "2.12.7", "2.13.0-M5"),
     scalacOptions ++= Seq(
       "-deprecation",
       "-encoding", "UTF-8",
@@ -157,9 +155,7 @@ object ScodecBuildSettings extends AutoPlugin {
       }
       val stripTestScope = stripIf { n => n.label == "dependency" && (n \ "scope").text == "test" }
       new RuleTransformer(stripTestScope).transform(node)(0)
-    },
-    useGpg := true,
-    useGpgAgent := true
+    }
   )
 
   private def releaseSettings = {
@@ -169,7 +165,6 @@ object ScodecBuildSettings extends AutoPlugin {
     )
     Seq(
       releaseCrossBuild := true,
-      releasePublishArtifactsAction := PgpKeys.publishSigned.value,
       releaseProcess := Seq[ReleaseStep](
         checkSnapshotDependencies,
         inquireVersions,

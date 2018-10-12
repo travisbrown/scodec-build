@@ -25,7 +25,7 @@ import BuildInfoPlugin.autoImport._
 
 object ScodecBuildSettings extends AutoPlugin {
 
-  override def requires = plugins.JvmPlugin
+  override def requires = plugins.JvmPlugin && ReleasePlugin
   override def trigger = allRequirements
 
   object autoImport {

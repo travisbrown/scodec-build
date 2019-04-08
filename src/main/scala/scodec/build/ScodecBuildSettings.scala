@@ -99,7 +99,6 @@ object ScodecBuildSettings extends AutoPlugin {
         else ("v" + version.value)
       }
       Seq(
-        "-diagrams",
         "-groups",
         "-implicits",
         "-implicits-show-all",

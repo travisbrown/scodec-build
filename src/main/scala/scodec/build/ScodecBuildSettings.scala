@@ -76,7 +76,7 @@ object ScodecBuildSettings extends AutoPlugin {
 
   private def scalaSettings = Seq(
     scalaVersion := "2.11.12",
-    crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0-RC1"),
+    crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0-RC2"),
     scalacOptions ++= Seq(
       "-deprecation",
       "-encoding", "UTF-8",
@@ -85,8 +85,7 @@ object ScodecBuildSettings extends AutoPlugin {
       "-Xlint",
       "-Ywarn-dead-code",
       "-Ywarn-numeric-widen",
-      "-Ywarn-value-discard",
-      "-Xfuture"
+      "-Ywarn-value-discard"
     ) ++ ifAtLeast("2.13", scalaVersion.value)(
       "-Yno-adapted-args"
     ) ++ ifAtLeast(scalaBinaryVersion.value, "2.11.0")(
